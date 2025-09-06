@@ -79,12 +79,12 @@ router.post('/', auth, async (req, res) => {
       return res.status(404).json({ error: 'Question not found' });
     }
     
-    // Check if user already responded to this question in this group
-    const existingResponse = await Response.findOne({
-      groupId,
-      userId: req.user._id,
-      questionId
-    });
+    // Check if user already responded to this question in this group -- remove this constraint to allow multiple replies
+   // const existingResponse = await Response.findOne({
+     // groupId,
+      //userId: req.user._id,
+      //questionId
+    //});
     
     if (existingResponse) {
       return res.status(400).json({ error: 'You have already responded to this question' });

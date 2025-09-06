@@ -881,14 +881,15 @@
         }
         
         // Update response form visibility
+        // note - allowing multiple entries for now
         function updateResponseForm() {
             const form = document.getElementById('responseForm');
-            if (userResponse) {
-                form.style.display = 'none';
-            } else {
+            //if (userResponse) {
+             //   form.style.display = 'none';
+            //} else {
                 form.style.display = 'block';
             }
-        }
+        
         
         // Enhanced form submission with photo upload
         document.getElementById('submitResponseForm').addEventListener('submit', async (e) => {
@@ -943,10 +944,13 @@
                     document.getElementById('responseText').value = '';
                     clearPhoto();
                     
+                    loadResponses ();
+                    
                     // Reload responses
-                    setTimeout(() => {
-                        loadResponses();
-                    }, 1000);
+                    // removing this because allowing multiple replies
+                   // setTimeout(() => {
+                    //    loadResponses();
+                    //}, 1000);
                 } else {
                     errorEl.textContent = data.error || 'Failed to submit response';
                     errorEl.style.display = 'block';

@@ -56,8 +56,8 @@ const responseSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Ensure one response per user per question per group
-responseSchema.index({ groupId: 1, userId: 1, questionId: 1 }, { unique: true });
+// Ensure one response per user per question per group -- taking this constraint out for now
+//responseSchema.index({ groupId: 1, userId: 1, questionId: 1 }, { unique: true });
 
 // Helper method to check if user liked this response
 responseSchema.methods.isLikedBy = function(userId) {
