@@ -7,6 +7,9 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+const { sendNotificationToUser, sendNotificationToGroup } = require('./notifications');
+
+
 // Get responses for a group and question
 router.get('/group/:groupId', auth, async (req, res) => {
   try {
@@ -99,6 +102,14 @@ router.post('/', auth, async (req, res) => {
     });
     
     await response.save();
+
+    // Notify other group members about new response
+    const payload = {
+    title: 'New Response',
+    body: `${req.user.username} shared their thoughts`,
+    url: `/group.html?id=${groupId}`
+    };
+    await sendNotificationToGroup(groupId, payload, req.user._id);    
     
     // Populate user info
     await response.populate('userId', 'username');
@@ -143,6 +154,15 @@ router.put('/:responseId/like', auth, async (req, res) => {
     
     await response.save();
     
+    if (likeIndex === -1) { // Only notify when adding a like, not removing
+    const payload = {
+        title: 'Response Liked',
+        body: `${req.user.username} liked your response`,
+        url: `/group.html?id=${response.groupId}`
+    };
+    await sendNotificationToUser(response.userId, payload);
+    }
+
     res.json({
       message: likeIndex > -1 ? 'Like removed' : 'Like added',
       isLiked: likeIndex === -1,
@@ -183,6 +203,13 @@ router.post('/:responseId/reply', auth, async (req, res) => {
     });
     
     await response.save();
+
+        const payload = {
+    title: 'New Reply',
+    body: `${req.user.username} replied to your response`,
+    url: `/group.html?id=${response.groupId}`
+    };
+    await sendNotificationToUser(response.userId, payload);
     
     // Populate the new reply
     await response.populate('replies.userId', 'username');
