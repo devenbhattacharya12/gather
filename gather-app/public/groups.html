@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Groups - Gather</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e1e5e9;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .groups-section {
+            margin-bottom: 40px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .groups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .group-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .group-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .group-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+        
+        .group-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        
+        .group-meta {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+        }
+        
+        .group-description {
+            color: #555;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        
+        .group-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .invite-code {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 12px;
+            color: #333;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #c6f6d5;
+            color: #2d5a2d;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .favorite-star {
+            cursor: pointer;
+            font-size: 16px;
+            color: #cbd5e0;
+            transition: color 0.2s;
+        }
+        
+        .favorite-star.active {
+            color: #f6d55c;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>My Groups</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="showJoinModal()">Join Group</button>
+                    <button class="btn btn-primary" onclick="showCreateModal()">Create Group</button>
+                    <a href="/" class="btn btn-secondary">Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Favorite Groups -->
+        <div class="groups-section" id="favoriteGroupsSection" style="display: none;">
+            <h2 class="section-title">⭐ Favorite Groups</h2>
+            <div class="groups-grid" id="favoriteGroupsGrid"></div>
+        </div>
+        
+        <!-- All Groups -->
+        <div class="groups-section">
+            <h2 class="section-title">All Groups</h2>
+            <div class="groups-grid" id="allGroupsGrid"></div>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <h3>No groups yet</h3>
+                <p>Create your first group or join one using an invite code!</p>
+                <div style="margin-top: 20px;">
+                    <button class="btn btn-primary" onclick="showCreateModal()">Create Group</button>
+                    <button class="btn btn-secondary" onclick="showJoinModal()">Join Group</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Create Group Modal -->
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <h2>Create New Group</h2>
+            <div class="error-message" id="createError"></div>
+            <form id="createForm">
+                <div class="form-group">
+                    <label for="groupName">Group Name</label>
+                    <input type="text" id="groupName" required maxlength="50">
+                </div>
+                <div class="form-group">
+                    <label for="groupDescription">Description (Optional)</label>
+                    <textarea id="groupDescription" rows="3" maxlength="200"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Join Group Modal -->
+    <div class="modal" id="joinModal">
+        <div class="modal-content">
+            <h2>Join Group</h2>
+            <div class="error-message" id="joinError"></div>
+            <div class="success-message" id="joinSuccess"></div>
+            <form id="joinForm">
+                <div class="form-group">
+                    <label for="inviteCode">Invite Code</label>
+                    <input type="text" id="inviteCode" required placeholder="Enter 8-character code" maxlength="8">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('joinModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Join Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let groups = [];
+        let favoriteGroups = [];
+        
+        // Load groups on page load
+        async function loadGroups() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/groups', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    groups = await response.json();
+                    await loadUserProfile();
+                    renderGroups();
+                } else {
+                    console.error('Failed to load groups');
+                }
+            } catch (error) {
+                console.error('Error loading groups:', error);
+            }
+        }
+        
+        // Load user profile to get favorite groups
+        async function loadUserProfile() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('/api/auth/me', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const user = await response.json();
+                    favoriteGroups = user.favoriteGroups.map(g => g._id);
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+            }
+        }
+        
+        // Render groups in the UI
+        function renderGroups() {
+            const allGrid = document.getElementById('allGroupsGrid');
+            const favoriteGrid = document.getElementById('favoriteGroupsGrid');
+            const favoriteSection = document.getElementById('favoriteGroupsSection');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (groups.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            // Separate favorite and regular groups
+            const favorites = groups.filter(group => favoriteGroups.includes(group._id));
+            const regular = groups.filter(group => !favoriteGroups.includes(group._id));
+            
+            // Show/hide favorite section
+            if (favorites.length > 0) {
+                favoriteSection.style.display = 'block';
+                favoriteGrid.innerHTML = favorites.map(group => renderGroupCard(group, true)).join('');
+            } else {
+                favoriteSection.style.display = 'none';
+            }
+            
+            // Render all groups
+            allGrid.innerHTML = regular.map(group => renderGroupCard(group, false)).join('');
+        }
+        
+        // Render a single group card
+        function renderGroupCard(group, isFavorite) {
+            const memberCount = group.members.length;
+            const memberText = memberCount === 1 ? '1 member' : `${memberCount} members`;
+            
+            return `
+                <div class="group-card">
+                    <div class="group-header">
+                        <div>
+                            <div class="group-name">${group.name}</div>
+                            <div class="group-meta">${memberText}</div>
+                        </div>
+                        <span class="favorite-star ${favoriteGroups.includes(group._id) ? 'active' : ''}" 
+                              onclick="toggleFavorite('${group._id}')">★</span>
+                    </div>
+                    ${group.description ? `<div class="group-description">${group.description}</div>` : ''}
+                    <div class="group-actions">
+                        <span class="invite-code">${group.inviteCode}</span>
+                        <button class="btn btn-primary" onclick="openGroup('${group._id}')">Open</button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Toggle favorite status
+        async function toggleFavorite(groupId) {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`/api/groups/${groupId}/favorite`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.isFavorite) {
+                        favoriteGroups.push(groupId);
+                    } else {
+                        favoriteGroups = favoriteGroups.filter(id => id !== groupId);
+                    }
+                    renderGroups();
+                }
+            } catch (error) {
+                console.error('Error toggling favorite:', error);
+            }
+        }
+        
+        // Open group (placeholder for now)
+        function openGroup(groupId) {
+            window.location.href = `/group.html?id=${groupId}`;
+        }
+        
+        // Show create modal
+        function showCreateModal() {
+            document.getElementById('createModal').style.display = 'block';
+        }
+        
+        // Show join modal
+        function showJoinModal() {
+            document.getElementById('joinModal').style.display = 'block';
+        }
+        
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            // Clear form and messages
+            document.querySelectorAll('.error-message, .success-message').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+        
+        // Create group form handler
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('groupName').value;
+            const description = document.getElementById('groupDescription').value;
+            const token = localStorage.getItem('token');
+            const errorEl = document.getElementById('createError');
+            
+            try {
+                const response = await fetch('/api/groups', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, description })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    closeModal('createModal');
+                    document.getElementById('createForm').reset();
+                    loadGroups(); // Reload groups
+                } else {
+                    errorEl.textContent = data.error || 'Failed to create group';
+                    errorEl.style.display = 'block';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.style.display = 'block';
+            }
+        });
+        
+        // Join group form handler
+        document.getElementById('joinForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const inviteCode = document.getElementById('inviteCode').value;
+            const token = localStorage.getItem('token');
+            const errorEl = document.getElementById('joinError');
+            const successEl = document.getElementById('joinSuccess');
+            
+            try {
+                const response = await fetch('/api/groups/join', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ inviteCode })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successEl.textContent = data.message;
+                    successEl.style.display = 'block';
+                    errorEl.style.display = 'none';
+                    document.getElementById('joinForm').reset();
+                    setTimeout(() => {
+                        closeModal('joinModal');
+                        loadGroups(); // Reload groups
+                    }, 1500);
+                } else {
+                    errorEl.textContent = data.error || 'Failed to join group';
+                    errorEl.style.display = 'block';
+                    successEl.style.display = 'none';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.style.display = 'block';
+                successEl.style.display = 'none';
+            }
+        });
+        
+        // Initialize page
+        loadGroups();
+    </script>
+</body>
+</html>

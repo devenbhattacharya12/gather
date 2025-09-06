@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group - Gather</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e1e5e9;
+            padding: 20px 0;
+            margin-bottom: 30px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .group-info h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 4px;
+        }
+        
+        .group-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .question-text {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .question-meta {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .response-form {
+            border-top: 1px solid #e1e5e9;
+            padding-top: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 80px;
+        }
+        
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .responses-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .responses-header {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .response-card {
+            padding: 20px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .response-card:last-child {
+            border-bottom: none;
+        }
+        
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .response-author {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .response-time {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .response-text {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+        
+        .response-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .like-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+        
+        .like-btn.liked {
+            color: #e53e3e;
+        }
+        
+        .reply-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .replies {
+            margin-top: 15px;
+            padding-left: 20px;
+            border-left: 3px solid #f1f3f4;
+        }
+        
+        .reply {
+            padding: 10px 0;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .reply:last-child {
+            border-bottom: none;
+        }
+        
+        .reply-author {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .reply-text {
+            color: #555;
+            margin-top: 4px;
+            font-size: 14px;
+        }
+        
+        .reply-form {
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .reply-form.active {
+            display: block;
+        }
+        
+        .reply-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .reply-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-message {
+            background: #c6f6d5;
+            color: #2d5a2d;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="group-info">
+                    <h1 id="groupName">Loading...</h1>
+                    <div class="group-meta" id="groupMeta">Loading group info...</div>
+                </div>
+                <div class="header-actions">
+                    <a href="/groups.html" class="btn btn-secondary">Back to Groups</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Question Card -->
+        <div class="question-card" id="questionCard" style="display: none;">
+            <div class="question-text" id="questionText"></div>
+            <div class="question-meta" id="questionMeta"></div>
+            
+            <!-- Response Form -->
+            <div class="response-form" id="responseForm">
+                <div class="error-message" id="responseError"></div>
+                <div class="success-message" id="responseSuccess"></div>
+                <form id="submitResponseForm">
+                    <div class="form-group">
+                        <textarea 
+                            id="responseText" 
+                            placeholder="Share your thoughts..."
+                            maxlength="1000"
+                            required
+                        ></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit Response</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Responses Section -->
+        <div class="responses-section" id="responsesSection" style="display: none;">
+            <div class="responses-header">
+                Group Responses <span id="responseCount"></span>
+            </div>
+            <div id="responsesList"></div>
+            <div class="empty-state" id="emptyResponses" style="display: none;">
+                <h3>No responses yet</h3>
+                <p>Be the first to answer today's question!</p>
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            Loading today's question...
+        </div>
+    </div>
+
+    <script>
+        let currentGroup = null;
+        let currentQuestion = null;
+        let currentResponses = [];
+        let userResponse = null;
+        
+        // Get group ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const groupId = urlParams.get('id');
+        
+        if (!groupId) {
+            window.location.href = '/groups.html';
+        }
+        
+        // Load group and question data
+        async function loadGroupData() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                // Load group info
+                const groupResponse = await fetch(`/api/groups/${groupId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (groupResponse.ok) {
+                    currentGroup = await groupResponse.json();
+                    updateGroupInfo();
+                } else {
+                    console.error('Failed to load group');
+                    window.location.href = '/groups.html';
+                    return;
+                }
+                
+                // Load today's question
+                const questionResponse = await fetch('/api/questions/today');
+                if (questionResponse.ok) {
+                    currentQuestion = await questionResponse.json();
+                    updateQuestionCard();
+                }
+                
+                // Load responses for this group
+                await loadResponses();
+                
+            } catch (error) {
+                console.error('Error loading group data:', error);
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+        
+        // Update group info in header
+        function updateGroupInfo() {
+            document.getElementById('groupName').textContent = currentGroup.name;
+            const memberCount = currentGroup.members.length;
+            const memberText = memberCount === 1 ? '1 member' : `${memberCount} members`;
+            document.getElementById('groupMeta').textContent = `${memberText} • ${currentGroup.inviteCode}`;
+        }
+        
+        // Update question card
+        function updateQuestionCard() {
+            document.getElementById('questionText').textContent = currentQuestion.text;
+            document.getElementById('questionMeta').textContent = `Today's Question • ${currentQuestion.category}`;
+            document.getElementById('questionCard').style.display = 'block';
+        }
+        
+        // Load responses for current group and question
+        async function loadResponses() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`/api/responses/group/${groupId}?questionId=${currentQuestion._id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    currentResponses = data.responses;
+                    
+                    // Check if current user has already responded
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    userResponse = currentResponses.find(r => r.userId._id === user.id);
+                    
+                    updateResponsesSection();
+                    updateResponseForm();
+                }
+            } catch (error) {
+                console.error('Error loading responses:', error);
+            }
+        }
+        
+        // Update responses section
+        function updateResponsesSection() {
+            const section = document.getElementById('responsesSection');
+            const list = document.getElementById('responsesList');
+            const empty = document.getElementById('emptyResponses');
+            const count = document.getElementById('responseCount');
+            
+            section.style.display = 'block';
+            count.textContent = `(${currentResponses.length})`;
+            
+            if (currentResponses.length === 0) {
+                empty.style.display = 'block';
+                list.innerHTML = '';
+                return;
+            }
+            
+            empty.style.display = 'none';
+            list.innerHTML = currentResponses.map(response => renderResponse(response)).join('');
+        }
+        
+        // Render a single response
+        function renderResponse(response) {
+            const user = JSON.parse(localStorage.getItem('user'));
+            const isLiked = response.likes.some(like => like.userId === user.id);
+            const timeAgo = formatTimeAgo(new Date(response.createdAt));
+            
+            return `
+                <div class="response-card">
+                    <div class="response-header">
+                        <span class="response-author">${response.userId.username}</span>
+                        <span class="response-time">${timeAgo}</span>
+                    </div>
+                    <div class="response-text">${response.text}</div>
+                    <div class="response-actions">
+                        <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${response._id}')">
+                            ${isLiked ? '❤️' : '🤍'} ${response.likes.length}
+                        </button>
+                        <button class="reply-btn" onclick="toggleReplyForm('${response._id}')">Reply</button>
+                    </div>
+                    
+                    ${response.replies.length > 0 ? `
+                        <div class="replies">
+                            ${response.replies.map(reply => `
+                                <div class="reply">
+                                    <div class="reply-author">${reply.userId.username}</div>
+                                    <div class="reply-text">${reply.text}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="reply-form" id="replyForm-${response._id}">
+                        <input type="text" class="reply-input" placeholder="Write a reply..." maxlength="500">
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" onclick="submitReply('${response._id}')">Reply</button>
+                            <button class="btn btn-secondary" onclick="toggleReplyForm('${response._id}')">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Update response form visibility
+        function updateResponseForm() {
+            const form = document.getElementById('responseForm');
+            if (userResponse) {
+                form.style.display = 'none';
+            } else {
+                form.style.display = 'block';
+            }
+        }
+        
+        // Submit response form
+        document.getElementById('submitResponseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const text = document.getElementById('responseText').value.trim();
+            const token = localStorage.getItem('token');
+            const errorEl = document.getElementById('responseError');
+            const successEl = document.getElementById('responseSuccess');
+            
+            if (!text) {
+                errorEl.textContent = 'Please enter a response';
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/responses', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        groupId: groupId,
+                        questionId: currentQuestion._id,
+                        text: text
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    successEl.textContent = 'Response submitted successfully!';
+                    successEl.style.display = 'block';
+                    errorEl.style.display = 'none';
+                    
+                    // Clear form and reload responses
+                    document.getElementById('responseText').value = '';
+                    setTimeout(() => {
+                        loadResponses();
+                    }, 1000);
+                } else {
+                    errorEl.textContent = data.error || 'Failed to submit response';
+                    errorEl.style.display = 'block';
+                    successEl.style.display = 'none';
+                }
+            } catch (error) {
+                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.style.display = 'block';
+                successEl.style.display = 'none';
+            }
+        });
+        
+        // Toggle like on response
+        async function toggleLike(responseId) {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`/api/responses/${responseId}/like`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    loadResponses(); // Reload to update like counts
+                }
+            } catch (error) {
+                console.error('Error toggling like:', error);
+            }
+        }
+        
+        // Toggle reply form
+        function toggleReplyForm(responseId) {
+            const form = document.getElementById(`replyForm-${responseId}`);
+            if (form.classList.contains('active')) {
+                form.classList.remove('active');
+            } else {
+                // Close other reply forms
+                document.querySelectorAll('.reply-form.active').forEach(f => f.classList.remove('active'));
+                form.classList.add('active');
+                form.querySelector('.reply-input').focus();
+            }
+        }
+        
+        // Submit reply
+        async function submitReply(responseId) {
+            const form = document.getElementById(`replyForm-${responseId}`);
+            const input = form.querySelector('.reply-input');
+            const text = input.value.trim();
+            const token = localStorage.getItem('token');
+            
+            if (!text) return;
+            
+            try {
+                const response = await fetch(`/api/responses/${responseId}/reply`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    form.classList.remove('active');
+                    loadResponses(); // Reload to show new reply
+                }
+            } catch (error) {
+                console.error('Error submitting reply:', error);
+            }
+        }
+        
+        // Format time ago
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diff = now - date;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+            
+            if (minutes < 1) return 'Just now';
+            if (minutes < 60) return `${minutes}m ago`;
+            if (hours < 24) return `${hours}h ago`;
+            return `${days}d ago`;
+        }
+        
+        // Initialize page
+        loadGroupData();
+    </script>
+</body>
+</html>
