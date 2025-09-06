@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Question Feed - Gather</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: white;
+            border-bottom: 1px solid #e1e5e9;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s;
+            font-size: 14px;
+        }
+        
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+        
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+        
+        .group-selector {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .group-selector select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        .feed-item {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .question-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .question-date {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .question-text {
+            font-size: 20px;
+            color: #333;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        
+        .question-category {
+            background: #f1f5f9;
+            color: #334155;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .responses-section {
+            margin-top: 20px;
+        }
+        
+        .responses-count {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .response-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .response-item:last-child {
+            border-bottom: none;
+        }
+        
+        .response-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .response-author {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .response-time {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .response-content {
+            margin-bottom: 12px;
+        }
+        
+        .response-text {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .response-photo {
+            max-width: 300px;
+            max-height: 200px;
+            border-radius: 8px;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        
+        .response-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .no-responses {
+            color: #666;
+            font-style: italic;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .load-more {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            cursor: pointer;
+        }
+        
+        .photo-modal img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+        
+        .photo-modal .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <h1>Question Feed</h1>
+                <div class="header-actions">
+                    <a href="/groups.html" class="btn btn-secondary">Back to Groups</a>
+                    <a href="/" class="btn btn-secondary">Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Group Selector -->
+        <div class="group-selector">
+            <select id="groupSelector" onchange="loadFeed()">
+                <option value="">Select a group to view its history</option>
+            </select>
+        </div>
+        
+        <!-- Feed -->
+        <div id="feedContainer"></div>
+        
+        <!-- Loading State -->
+        <div class="loading" id="loadingState" style="display: none;">
+            Loading questions and responses...
+        </div>
+        
+        <!-- Load More Button -->
+        <div class="load-more" id="loadMoreSection" style="display: none;">
+            <button class="btn btn-secondary" onclick="loadMoreQuestions()">Load Older Questions</button>
+        </div>
+    </div>
+
+    <script>
+        let userGroups = [];
+        let currentGroupId = null;
+        let allQuestions = [];
+        let currentPage = 0;
+        const questionsPerPage = 10;
+        
+        // Load user's groups
+        async function loadUserGroups() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/groups', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                
+                if (response.ok) {
+                    userGroups = await response.json();
+                    populateGroupSelector();
+                }
+            } catch (error) {
+                console.error('Error loading groups:', error);
+            }
+        }
+        
+        // Populate group selector
+        function populateGroupSelector() {
+            const select = document.getElementById('groupSelector');
+            userGroups.forEach(group => {
+                const option = document.createElement('option');
+                option.value = group._id;
+                option.textContent = group.name;
+                select.appendChild(option);
+            });
+        }
+        
+        // Load feed for selected group
+        async function loadFeed() {
+            const groupId = document.getElementById('groupSelector').value;
+            if (!groupId) {
+                document.getElementById('feedContainer').innerHTML = '';
+                return;
+            }
+            
+            currentGroupId = groupId;
+            currentPage = 0;
+            document.getElementById('loadingState').style.display = 'block';
+            
+            try {
+                // Load questions
+                const questionsResponse = await fetch('/api/questions/history');
+                if (questionsResponse.ok) {
+                    allQuestions = await questionsResponse.json();
+                    
+                    // Load responses for each question
+                    await loadResponsesForQuestions();
+                    
+                    // Filter questions that have responses in this group
+                    const questionsWithResponses = allQuestions.filter(q => 
+                        q.groupResponses && q.groupResponses.length > 0
+                    );
+                    
+                    renderFeed(questionsWithResponses);
+                }
+            } catch (error) {
+                console.error('Error loading feed:', error);
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+        
+        // Load responses for questions
+        async function loadResponsesForQuestions() {
+            const token = localStorage.getItem('token');
+            
+            for (const question of allQuestions) {
+                try {
+                    const response = await fetch(
+                        `/api/responses/group/${currentGroupId}?questionId=${question._id}`,
+                        { headers: { 'Authorization': `Bearer ${token}` } }
+                    );
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        question.groupResponses = data.responses;
+                    } else {
+                        question.groupResponses = [];
+                    }
+                } catch (error) {
+                    console.error('Error loading responses:', error);
+                    question.groupResponses = [];
+                }
+            }
+        }
+        
+        // Render the feed
+        function renderFeed(questions) {
+            const container = document.getElementById('feedContainer');
+            
+            if (questions.length === 0) {
+                container.innerHTML = `
+                    <div class="feed-item">
+                        <div class="no-responses">
+                            No questions with responses found for this group yet.
+                            Start answering daily questions to build your history!
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            const feedHtml = questions.map(question => renderFeedItem(question)).join('');
+            container.innerHTML = feedHtml;
+        }
+        
+        // Render a single feed item
+        function renderFeedItem(question) {
+            const questionDate = new Date(question.date);
+            const formattedDate = questionDate.toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const responses = question.groupResponses || [];
+            
+            const responsesHtml = responses.length > 0 
+                ? responses.map(response => renderResponse(response)).join('')
+                : '<div class="no-responses">No responses yet</div>';
+            
+            return `
+                <div class="feed-item">
+                    <div class="question-header">
+                        <div class="question-date">${formattedDate}</div>
+                        <div class="question-text">${question.text}</div>
+                        <span class="question-category">${question.category}</span>
+                    </div>
+                    
+                    <div class="responses-section">
+                        <div class="responses-count">
+                            ${responses.length} response${responses.length !== 1 ? 's' : ''}
+                        </div>
+                        ${responsesHtml}
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Render a single response
+        function renderResponse(response) {
+            const responseTime = new Date(response.createdAt);
+            const timeAgo = formatTimeAgo(responseTime);
+            
+            return `
+                <div class="response-item">
+                    <div class="response-header">
+                        <span class="response-author">${response.userId.username}</span>
+                        <span class="response-time">${timeAgo}</span>
+                    </div>
+                    <div class="response-content">
+                        ${response.text ? `<div class="response-text">${response.text}</div>` : ''}
+                        ${response.photoUrl ? `
+                            <img src="${response.photoUrl}" 
+                                 alt="Response photo" 
+                                 class="response-photo"
+                                 onclick="openPhotoModal('${response.photoUrl}')">
+                        ` : ''}
+                    </div>
+                    <div class="response-stats">
+                        <span>${response.likes.length} like${response.likes.length !== 1 ? 's' : ''}</span>
+                        <span>${response.replies.length} repl${response.replies.length !== 1 ? 'ies' : 'y'}</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Format time ago
+        function formatTimeAgo(date) {
+            const now = new Date();
+            const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+            const diffInDays = Math.floor(diffInHours / 24);
+            
+            if (diffInDays === 0) {
+                if (diffInHours === 0) return 'Just now';
+                return `${diffInHours}h ago`;
+            } else if (diffInDays === 1) {
+                return 'Yesterday';
+            } else if (diffInDays < 7) {
+                return `${diffInDays}d ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+        
+        // Photo modal functionality
+        function openPhotoModal(photoUrl) {
+            const modal = document.createElement('div');
+            modal.className = 'photo-modal';
+            modal.innerHTML = `
+                <span class="close-modal" onclick="closePhotoModal()">&times;</span>
+                <img src="${photoUrl}" alt="Full size photo">
+            `;
+            
+            modal.onclick = closePhotoModal;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        function closePhotoModal() {
+            const modal = document.querySelector('.photo-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+        
+        // Initialize page
+        loadUserGroups();
+    </script>
+</body>
+</html>

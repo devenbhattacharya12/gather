@@ -126,6 +126,141 @@
             outline: none;
             border-color: #667eea;
         }
+
+        /* Photo Upload Styles */
+        .photo-upload-section {
+            margin: 15px 0;
+        }
+
+        .photo-upload-area {
+            border: 2px dashed #e1e5e9;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s;
+            position: relative;
+        }
+
+        .photo-upload-area:hover {
+            border-color: #667eea;
+        }
+
+        .upload-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+        }
+
+        .upload-icon {
+            font-size: 24px;
+        }
+
+        .photo-preview {
+            position: relative;
+            display: inline-block;
+        }
+
+        .photo-preview img {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 6px;
+            object-fit: cover;
+        }
+
+        .remove-photo {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #e53e3e;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-progress {
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e1e5e9;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .response-with-photo {
+            margin-bottom: 15px;
+        }
+
+        .response-photo {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .photo-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            cursor: pointer;
+        }
+
+        .photo-modal img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+        }
+
+        .photo-modal .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+        }
         
         .responses-section {
             background: white;
@@ -307,7 +442,7 @@
             <div class="question-text" id="questionText"></div>
             <div class="question-meta" id="questionMeta"></div>
             
-            <!-- Response Form -->
+            <!-- Enhanced Response Form with Photo Upload -->
             <div class="response-form" id="responseForm">
                 <div class="error-message" id="responseError"></div>
                 <div class="success-message" id="responseSuccess"></div>
@@ -317,10 +452,35 @@
                             id="responseText" 
                             placeholder="Share your thoughts..."
                             maxlength="1000"
-                            required
                         ></textarea>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit Response</button>
+                    
+                    <!-- Photo Upload Section -->
+                    <div class="photo-upload-section">
+                        <div class="photo-upload-area" id="photoUploadArea">
+                            <input type="file" id="photoInput" accept="image/*" style="display: none;">
+                            <div class="upload-placeholder" id="uploadPlaceholder">
+                                <span class="upload-icon">📷</span>
+                                <span>Click to add a photo (optional)</span>
+                            </div>
+                            <div class="photo-preview" id="photoPreview" style="display: none;">
+                                <img id="previewImage" src="" alt="Preview">
+                                <button type="button" class="remove-photo" id="removePhoto">✕</button>
+                            </div>
+                        </div>
+                        <div class="upload-progress" id="uploadProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progressFill"></div>
+                            </div>
+                            <span class="progress-text">Uploading photo...</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
+                            Submit Response
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -348,6 +508,8 @@
         let currentQuestion = null;
         let currentResponses = [];
         let userResponse = null;
+        let selectedPhoto = null;
+        let uploadedPhotoUrl = null;
         
         // Get group ID from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -355,6 +517,132 @@
         
         if (!groupId) {
             window.location.href = '/groups.html';
+        }
+
+        // Initialize photo upload functionality
+        function initPhotoUpload() {
+            const uploadArea = document.getElementById('photoUploadArea');
+            const photoInput = document.getElementById('photoInput');
+            const placeholder = document.getElementById('uploadPlaceholder');
+            const preview = document.getElementById('photoPreview');
+            const previewImage = document.getElementById('previewImage');
+            const removePhoto = document.getElementById('removePhoto');
+            
+            // Click to select photo
+            uploadArea.addEventListener('click', (e) => {
+                if (e.target !== removePhoto) {
+                    photoInput.click();
+                }
+            });
+            
+            // Handle file selection
+            photoInput.addEventListener('change', handlePhotoSelect);
+            
+            // Remove photo
+            removePhoto.addEventListener('click', (e) => {
+                e.stopPropagation();
+                clearPhoto();
+            });
+            
+            // Drag and drop
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#667eea';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = '#e1e5e9';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = '#e1e5e9';
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    photoInput.files = files;
+                    handlePhotoSelect();
+                }
+            });
+        }
+
+        // Handle photo selection
+        function handlePhotoSelect() {
+            const file = photoInput.files[0];
+            if (!file) return;
+            
+            // Validate file size (5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showError('Photo must be less than 5MB');
+                return;
+            }
+            
+            // Show preview
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('uploadPlaceholder').style.display = 'none';
+                document.getElementById('photoPreview').style.display = 'block';
+                selectedPhoto = file;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Clear photo selection
+        function clearPhoto() {
+            document.getElementById('photoInput').value = '';
+            document.getElementById('uploadPlaceholder').style.display = 'flex';
+            document.getElementById('photoPreview').style.display = 'none';
+            selectedPhoto = null;
+            uploadedPhotoUrl = null;
+        }
+
+        // Upload photo to Cloudinary
+        async function uploadPhoto() {
+            if (!selectedPhoto) return null;
+            
+            const formData = new FormData();
+            formData.append('photo', selectedPhoto);
+            
+            const token = localStorage.getItem('token');
+            const progressEl = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            
+            progressEl.style.display = 'block';
+            
+            try {
+                const response = await fetch('/api/upload/photo', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                progressFill.style.width = '100%';
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    uploadedPhotoUrl = data.photoUrl;
+                    return data.photoUrl;
+                } else {
+                    throw new Error('Upload failed');
+                }
+            } catch (error) {
+                throw error;
+            } finally {
+                setTimeout(() => {
+                    progressEl.style.display = 'none';
+                    progressFill.style.width = '0%';
+                }, 500);
+            }
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorEl = document.getElementById('responseError');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
         }
         
         // Load group and question data
@@ -457,11 +745,17 @@
             list.innerHTML = currentResponses.map(response => renderResponse(response)).join('');
         }
         
-        // Render a single response
+        // Enhanced response rendering with photos
         function renderResponse(response) {
             const user = JSON.parse(localStorage.getItem('user'));
             const isLiked = response.likes.some(like => like.userId === user.id);
             const timeAgo = formatTimeAgo(new Date(response.createdAt));
+            
+            const photoHtml = response.photoUrl ? `
+                <div class="response-with-photo">
+                    <img src="${response.photoUrl}" alt="Response photo" class="response-photo" onclick="openPhotoModal('${response.photoUrl}')">
+                </div>
+            ` : '';
             
             return `
                 <div class="response-card">
@@ -469,7 +763,8 @@
                         <span class="response-author">${response.userId.username}</span>
                         <span class="response-time">${timeAgo}</span>
                     </div>
-                    <div class="response-text">${response.text}</div>
+                    ${photoHtml}
+                    ${response.text ? `<div class="response-text">${response.text}</div>` : ''}
                     <div class="response-actions">
                         <button class="like-btn ${isLiked ? 'liked' : ''}" onclick="toggleLike('${response._id}')">
                             ${isLiked ? '❤️' : '🤍'} ${response.likes.length}
@@ -490,13 +785,34 @@
                     
                     <div class="reply-form" id="replyForm-${response._id}">
                         <input type="text" class="reply-input" placeholder="Write a reply..." maxlength="500">
-                        <div style="display: flex; gap: 8px;">
+                        <div style="display: flex; gap: 8px; margin-top: 8px;">
                             <button class="btn btn-primary" onclick="submitReply('${response._id}')">Reply</button>
                             <button class="btn btn-secondary" onclick="toggleReplyForm('${response._id}')">Cancel</button>
                         </div>
                     </div>
                 </div>
             `;
+        }
+
+        // Photo modal functionality
+        function openPhotoModal(photoUrl) {
+            const modal = document.createElement('div');
+            modal.className = 'photo-modal';
+            modal.innerHTML = `
+                <span class="close-modal" onclick="closePhotoModal()">&times;</span>
+                <img src="${photoUrl}" alt="Full size photo">
+            `;
+            
+            modal.onclick = closePhotoModal;
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        function closePhotoModal() {
+            const modal = document.querySelector('.photo-modal');
+            if (modal) {
+                modal.remove();
+            }
         }
         
         // Update response form visibility
@@ -509,7 +825,7 @@
             }
         }
         
-        // Submit response form
+        // Enhanced form submission with photo upload
         document.getElementById('submitResponseForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -517,14 +833,26 @@
             const token = localStorage.getItem('token');
             const errorEl = document.getElementById('responseError');
             const successEl = document.getElementById('responseSuccess');
+            const submitBtn = document.getElementById('submitBtn');
             
-            if (!text) {
-                errorEl.textContent = 'Please enter a response';
+            // Validation
+            if (!text && !selectedPhoto) {
+                errorEl.textContent = 'Please enter text or add a photo';
                 errorEl.style.display = 'block';
                 return;
             }
             
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
             try {
+                // Upload photo if selected
+                let photoUrl = null;
+                if (selectedPhoto) {
+                    photoUrl = await uploadPhoto();
+                }
+                
+                // Submit response
                 const response = await fetch('/api/responses', {
                     method: 'POST',
                     headers: {
@@ -534,7 +862,8 @@
                     body: JSON.stringify({
                         groupId: groupId,
                         questionId: currentQuestion._id,
-                        text: text
+                        text: text || '',
+                        photoUrl: photoUrl
                     })
                 });
                 
@@ -545,8 +874,11 @@
                     successEl.style.display = 'block';
                     errorEl.style.display = 'none';
                     
-                    // Clear form and reload responses
+                    // Clear form
                     document.getElementById('responseText').value = '';
+                    clearPhoto();
+                    
+                    // Reload responses
                     setTimeout(() => {
                         loadResponses();
                     }, 1000);
@@ -556,9 +888,12 @@
                     successEl.style.display = 'none';
                 }
             } catch (error) {
-                errorEl.textContent = 'Network error. Please try again.';
+                errorEl.textContent = 'Error submitting response. Please try again.';
                 errorEl.style.display = 'block';
                 successEl.style.display = 'none';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Response';
             }
         });
         
@@ -637,7 +972,140 @@
         }
         
         // Initialize page
-        loadGroupData();
+        document.addEventListener('DOMContentLoaded', () => {
+            initPhotoUpload();
+            loadGroupData();
+        });
+    // Push notification setup
+let isSubscribed = false;
+let swRegistration = null;
+
+// Initialize push notifications
+async function initPushNotifications() {
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    try {
+      // Register service worker
+      swRegistration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered');
+      
+      // Check if already subscribed
+      const subscription = await swRegistration.pushManager.getSubscription();
+      isSubscribed = !(subscription === null);
+      
+      updateNotificationUI();
+      
+      if (isSubscribed) {
+        console.log('User is already subscribed');
+      }
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  } else {
+    console.warn('Push messaging is not supported');
+  }
+}
+
+// Request notification permission and subscribe
+async function subscribeUser() {
+  try {
+    const permission = await Notification.requestPermission();
+    
+    if (permission !== 'granted') {
+      console.warn('Notification permission denied');
+      return;
+    }
+    
+    const applicationServerKey = urlB64ToUint8Array('BPcp5Gm9w9Wm0ImCdtJH4H3kBBElM786UhNcAHhQEYUfmvjpWVtyRasEtgB8tk7LUQ5Bp2TSHZomXAOdt9ul-Mc');
+    
+    const subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    });
+    
+    // Send subscription to server
+    const token = localStorage.getItem('token');
+    const response = await fetch('/api/notifications/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(subscription)
+    });
+    
+    if (response.ok) {
+      isSubscribed = true;
+      updateNotificationUI();
+      console.log('Push notification subscription successful');
+    }
+  } catch (error) {
+    console.error('Failed to subscribe to push notifications:', error);
+  }
+}
+
+// Unsubscribe from notifications
+async function unsubscribeUser() {
+  try {
+    const subscription = await swRegistration.pushManager.getSubscription();
+    
+    if (subscription) {
+      await subscription.unsubscribe();
+      
+      // Notify server
+      const token = localStorage.getItem('token');
+      await fetch('/api/notifications/unsubscribe', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ endpoint: subscription.endpoint })
+      });
+      
+      isSubscribed = false;
+      updateNotificationUI();
+      console.log('Push notification unsubscription successful');
+    }
+  } catch (error) {
+    console.error('Failed to unsubscribe from push notifications:', error);
+  }
+}
+
+// Update notification button UI
+function updateNotificationUI() {
+  const notificationBtn = document.getElementById('notificationBtn');
+  if (notificationBtn) {
+    if (isSubscribed) {
+      notificationBtn.textContent = '🔕 Disable Notifications';
+      notificationBtn.onclick = unsubscribeUser;
+    } else {
+      notificationBtn.textContent = '🔔 Enable Notifications';
+      notificationBtn.onclick = subscribeUser;
+    }
+  }
+}
+
+// Convert VAPID key
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Initialize on page load
+if (localStorage.getItem('token')) {
+  initPushNotifications();
+}
+        
     </script>
 </body>
 </html>

@@ -79,7 +79,15 @@
             <div class="status">
                 ✓ Welcome back! You're logged in.
             </div>
-            
+                <div>
+                    <a href="/groups.html" class="btn">My Groups</a>
+                    <button id="notificationBtn" class="btn btn-secondary">🔔 Enable Notifications</button>
+                    <a href="/api/health" class="btn">Test API</a>
+                    <button onclick="logout()" class="btn logout">Logout</button>
+                    <a href="/history.html" class="btn">Question Feed</a>
+                        </div>
+
+
             <div class="user-info" id="userInfo">
                 <!-- User info will be populated here -->
             </div>
@@ -167,6 +175,136 @@
         
         // Initialize on page load
         checkAuth();
+
+        // Push notification setup
+let isSubscribed = false;
+let swRegistration = null;
+
+// Initialize push notifications
+async function initPushNotifications() {
+  if ('serviceWorker' in navigator && 'PushManager' in window) {
+    try {
+      // Register service worker
+      swRegistration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered');
+      
+      // Check if already subscribed
+      const subscription = await swRegistration.pushManager.getSubscription();
+      isSubscribed = !(subscription === null);
+      
+      updateNotificationUI();
+      
+      if (isSubscribed) {
+        console.log('User is already subscribed');
+      }
+    } catch (error) {
+      console.error('Service Worker registration failed:', error);
+    }
+  } else {
+    console.warn('Push messaging is not supported');
+  }
+}
+
+// Request notification permission and subscribe
+async function subscribeUser() {
+  try {
+    const permission = await Notification.requestPermission();
+    
+    if (permission !== 'granted') {
+      console.warn('Notification permission denied');
+      return;
+    }
+    
+    const applicationServerKey = urlB64ToUint8Array('BPcp5Gm9w9Wm0ImCdtJH4H3kBBElM786UhNcAHhQEYUfmvjpWVtyRasEtgB8tk7LUQ5Bp2TSHZomXAOdt9ul-Mc');
+    
+    const subscription = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    });
+    
+    // Send subscription to server
+    const token = localStorage.getItem('token');
+    const response = await fetch('/api/notifications/subscribe', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(subscription)
+    });
+    
+    if (response.ok) {
+      isSubscribed = true;
+      updateNotificationUI();
+      console.log('Push notification subscription successful');
+    }
+  } catch (error) {
+    console.error('Failed to subscribe to push notifications:', error);
+  }
+}
+
+// Unsubscribe from notifications
+async function unsubscribeUser() {
+  try {
+    const subscription = await swRegistration.pushManager.getSubscription();
+    
+    if (subscription) {
+      await subscription.unsubscribe();
+      
+      // Notify server
+      const token = localStorage.getItem('token');
+      await fetch('/api/notifications/unsubscribe', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ endpoint: subscription.endpoint })
+      });
+      
+      isSubscribed = false;
+      updateNotificationUI();
+      console.log('Push notification unsubscription successful');
+    }
+  } catch (error) {
+    console.error('Failed to unsubscribe from push notifications:', error);
+  }
+}
+
+// Update notification button UI
+function updateNotificationUI() {
+  const notificationBtn = document.getElementById('notificationBtn');
+  if (notificationBtn) {
+    if (isSubscribed) {
+      notificationBtn.textContent = '🔕 Disable Notifications';
+      notificationBtn.onclick = unsubscribeUser;
+    } else {
+      notificationBtn.textContent = '🔔 Enable Notifications';
+      notificationBtn.onclick = subscribeUser;
+    }
+  }
+}
+
+// Convert VAPID key
+function urlB64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/\-/g, '+')
+    .replace(/_/g, '/');
+
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Initialize on page load
+if (localStorage.getItem('token')) {
+  initPushNotifications();
+}
     </script>
 </body>
 </html>
