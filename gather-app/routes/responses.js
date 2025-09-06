@@ -86,9 +86,9 @@ router.post('/', auth, async (req, res) => {
       //questionId
     //});
     
-    if (existingResponse) {
-      return res.status(400).json({ error: 'You have already responded to this question' });
-    }
+   // if (existingResponse) {
+     // return res.status(400).json({ error: 'You have already responded to this question' });
+    //}
     
     // Create response
     const response = new Response({
