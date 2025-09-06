@@ -1,14 +1,12 @@
-// routes/responses.js (Updated)
+// routes/responses.js
 const express = require('express');
 const Response = require('../models/Response');
 const Question = require('../models/Question');
 const Group = require('../models/Group');
 const auth = require('../middleware/auth');
-
-const router = express.Router();
-
 const { sendNotificationToUser, sendNotificationToGroup } = require('./notifications');
 
+const router = express.Router();
 
 // Get responses for a group and question
 router.get('/group/:groupId', auth, async (req, res) => {
@@ -104,12 +102,18 @@ router.post('/', auth, async (req, res) => {
     await response.save();
 
     // Notify other group members about new response
-    const payload = {
-    title: 'New Response',
-    body: `${req.user.username} shared their thoughts`,
-    url: `/group.html?id=${groupId}`
-    };
-    await sendNotificationToGroup(groupId, payload, req.user._id);    
+    console.log('New response created, about to notify group members...');
+    try {
+      const payload = {
+        title: 'New Response',
+        body: `${req.user.username} shared their thoughts`,
+        url: `/group.html?id=${groupId}`
+      };
+      await sendNotificationToGroup(groupId, payload, req.user._id);
+      console.log('Group notification sent successfully');
+    } catch (error) {
+      console.error('Failed to send group notification:', error);
+    }
     
     // Populate user info
     await response.populate('userId', 'username');
@@ -150,18 +154,23 @@ router.put('/:responseId/like', auth, async (req, res) => {
     } else {
       // Add like
       response.likes.push({ userId });
+      
+      // Notify response author about the like (only when adding, not removing)
+      console.log('Like added, about to notify response author...');
+      try {
+        const payload = {
+          title: 'Response Liked',
+          body: `${req.user.username} liked your response`,
+          url: `/group.html?id=${response.groupId}`
+        };
+        await sendNotificationToUser(response.userId, payload);
+        console.log('Like notification sent successfully');
+      } catch (error) {
+        console.error('Failed to send like notification:', error);
+      }
     }
     
     await response.save();
-    
-    if (likeIndex === -1) { // Only notify when adding a like, not removing
-    const payload = {
-        title: 'Response Liked',
-        body: `${req.user.username} liked your response`,
-        url: `/group.html?id=${response.groupId}`
-    };
-    await sendNotificationToUser(response.userId, payload);
-    }
 
     res.json({
       message: likeIndex > -1 ? 'Like removed' : 'Like added',
@@ -204,12 +213,19 @@ router.post('/:responseId/reply', auth, async (req, res) => {
     
     await response.save();
 
-        const payload = {
-    title: 'New Reply',
-    body: `${req.user.username} replied to your response`,
-    url: `/group.html?id=${response.groupId}`
-    };
-    await sendNotificationToUser(response.userId, payload);
+    // Notify response author about the reply
+    console.log('Reply added, about to notify response author...');
+    try {
+      const payload = {
+        title: 'New Reply',
+        body: `${req.user.username} replied to your response`,
+        url: `/group.html?id=${response.groupId}`
+      };
+      await sendNotificationToUser(response.userId, payload);
+      console.log('Reply notification sent successfully');
+    } catch (error) {
+      console.error('Failed to send reply notification:', error);
+    }
     
     // Populate the new reply
     await response.populate('replies.userId', 'username');
