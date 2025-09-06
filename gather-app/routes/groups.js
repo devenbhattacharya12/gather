@@ -5,6 +5,8 @@ const auth = require('../middleware/auth');
 
 const router = express.Router();
 
+const Response = require('../models/Response');
+
 // Helper function to generate unique invite code
 async function generateUniqueInviteCode() {
   let inviteCode;
@@ -230,6 +232,55 @@ router.delete('/:id/leave', auth, async (req, res) => {
   } catch (error) {
     console.error('Leave group error:', error);
     res.status(500).json({ error: 'Server error leaving group' });
+  }
+});
+
+// Add this route to your routes/groups.js file
+router.get('/:id/activity', auth, async (req, res) => {
+  try {
+    const groupId = req.params.id;
+    const since = req.query.since ? new Date(req.query.since) : new Date(Date.now() - 60000); // Default to 1 minute ago
+    
+    // Check if user is member of the group
+    const group = await Group.findById(groupId);
+    if (!group || !group.members.includes(req.user._id)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    
+    // Check for new responses since the last check
+    const newResponses = await Response.find({
+      groupId: groupId,
+      createdAt: { $gt: since }
+    }).populate('userId', 'username');
+    
+    // Check for new likes/replies since the last check
+    const updatedResponses = await Response.find({
+      groupId: groupId,
+      $or: [
+        { 'likes.createdAt': { $gt: since } },
+        { 'replies.createdAt': { $gt: since } }
+      ]
+    }).populate('userId', 'username');
+    
+    const hasNewActivity = newResponses.length > 0 || updatedResponses.length > 0;
+    let message = '';
+    
+    if (newResponses.length > 0) {
+      message = `${newResponses[0].userId.username} shared a new response`;
+    } else if (updatedResponses.length > 0) {
+      message = 'New likes and replies in your group';
+    }
+    
+    res.json({
+      hasNewActivity,
+      message,
+      newResponses: newResponses.length,
+      updatedResponses: updatedResponses.length
+    });
+    
+  } catch (error) {
+    console.error('Activity check error:', error);
+    res.status(500).json({ error: 'Server error checking activity' });
   }
 });
 

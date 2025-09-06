@@ -510,7 +510,72 @@
         let userResponse = null;
         let selectedPhoto = null;
         let uploadedPhotoUrl = null;
+        let lastActivityCheck = new Date();
+
         
+
+                    // Check for new activity every 30 seconds
+            setInterval(async function() {
+            if (!currentGroup || !localStorage.getItem('token')) return;
+            
+            try {
+                const response = await fetch(`/api/groups/${groupId}/activity?since=${lastActivityCheck.toISOString()}`, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+                
+                if (response.ok) {
+                const data = await response.json();
+                
+                if (data.hasNewActivity) {
+                    // Show notification banner
+                    showActivityNotification(data.message || 'New activity in your group!');
+                    
+                    // Refresh responses to show new content
+                    loadResponses();
+                }
+                
+                lastActivityCheck = new Date();
+                }
+            } catch (error) {
+                console.log('Failed to check for updates');
+            }
+            }, 30000); // Check every 30 seconds
+
+            // Show activity notification
+            function showActivityNotification(message) {
+            // Create notification if it doesn't exist
+            if (!document.getElementById('activity-notification')) {
+                const notification = document.createElement('div');
+                notification.id = 'activity-notification';
+                notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; 
+                background: #4CAF50; color: white; 
+                padding: 15px 20px; border-radius: 8px; 
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 1000; display: none;
+                max-width: 300px;
+                `;
+                document.body.appendChild(notification);
+            }
+            
+            const notification = document.getElementById('activity-notification');
+            notification.innerHTML = `
+                ${message}
+                <button onclick="hideActivityNotification()" style="float: right; background: none; border: none; color: white; margin-left: 10px; cursor: pointer;">×</button>
+            `;
+            notification.style.display = 'block';
+            
+            // Auto hide after 5 seconds
+            setTimeout(hideActivityNotification, 5000);
+            }
+
+            function hideActivityNotification() {
+            const notification = document.getElementById('activity-notification');
+            if (notification) {
+                notification.style.display = 'none';
+            }
+            }
+
         // Get group ID from URL
         const urlParams = new URLSearchParams(window.location.search);
         const groupId = urlParams.get('id');
