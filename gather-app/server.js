@@ -20,12 +20,18 @@ const authRoutes = require('./routes/auth');
 const groupRoutes = require('./routes/groups');
 const questionRoutes = require('./routes/questions');
 const responseRoutes = require('./routes/responses');
+const uploadRoutes = require('./routes/upload');
+const { router: notificationRoutes } = require('./routes/notifications');
+
 
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/questions', questionRoutes);
 app.use('/api/responses', responseRoutes);
+app.use('/api/upload', uploadRoutes);
+app.use('/api/notifications', notificationRoutes);
+
 
 // Basic route for testing
 app.get('/api/health', (req, res) => {
